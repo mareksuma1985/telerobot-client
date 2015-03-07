@@ -761,27 +761,7 @@ void zczytuj_joystick() {
 					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
 				}
 				/* oś X drugiego drążka (3) */
-			} /* FIXME: generuje dziwne wartości */
-			/*else if (jse.number == 4) {
-				stick_4 = jse.value;
-				printf("oś: %d wychylenie %d\n", jse.number, stick_4);
-
-				wyslij_stick(1, stick_4);
-				if (stick_4 != 0) {
-					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-				}
 			}
-			else if (jse.number != 4) {
-				stick_4 = jse.value;
-				printf("oś: %d wychylenie %d\n", jse.number, stick_4);
-
-				wyslij_stick(2, stick_4);
-				if (stick_4 != 0) {
-					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-				}
-			*/
-			}
-			/* inne osie */
 		}
 
 		if (jse.type == JS_EVENT_BUTTON) {
