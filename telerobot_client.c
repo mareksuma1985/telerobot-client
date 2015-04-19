@@ -1028,6 +1028,9 @@ int main(int argc, char *argv[]) {
 	/* zagnieżdża ramkę video drugiej komórce głównej tabeli */
 
 	/* prawa komórka głównej tabeli */
+	// grid method
+    // right_table = gtk_grid_new();
+	// table method
 	right_table = gtk_table_new(3, 3, TRUE);
 	gtk_table_set_row_spacings(GTK_TABLE(right_table), 2);
 	gtk_table_set_col_spacings(GTK_TABLE(right_table), 2);
@@ -1224,6 +1227,23 @@ int main(int argc, char *argv[]) {
 	 gtk_table_attach_defaults(GTK_TABLE(right_table), grzybek_lewy, 0, 1, 3, 3 );
 	 g_signal_connect (G_OBJECT (grzybek_lewy), "draw", G_CALLBACK (draw_callback), NULL);
 	 */
+	 
+	 // grid method
+	 /*
+	 gtk_grid_attach(GTK_GRID(right_table), label_x, 0, 0, 2, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), label_y, 0, 1, 2, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), label_x2, 1, 0, 2, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), label_y2, 1, 1, 2, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), fullscreen_enable_button, 2, 2, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), fullscreen_disable_button, 2, 2, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), video_icon, 1, 3, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), check_button_video, 1, 3, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), joystick_icon, 0, 3, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), check_button_joystick, 0, 3, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), check_button_serwokontroler, 0, 2, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), check_button_regulator, 1, 2, 1, 1);
+	 gtk_grid_attach(GTK_GRID(right_table), quit_button, 2, 3, 1, 1);
+	  */
 
 	/* pakowanie głównych elementów okna programu: */
 	vbox = gtk_vbox_new(FALSE, 2);
