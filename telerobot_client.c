@@ -218,6 +218,21 @@ video_start() {
 	// TODO TCP
 }
 
+introduce_yourself_TCP(){
+packet_adres_nadajnika[0] = 51;
+//TODO
+packet_adres_nadajnika[1] = nadajnik_IP >> 24;
+packet_adres_nadajnika[2] = nadajnik_IP >> 16;
+packet_adres_nadajnika[3] = nadajnik_IP >> 8;
+packet_adres_nadajnika[4] = nadajnik_IP;
+
+if (write(SocketFD, packet_adres_nadajnika, 5) < 0) {
+printf("adres nie wysłany przes TCP\n");
+} else {
+printf("wysłany adres: %2hd.%2hd.%2hd.%2hd\n", packet_adres_nadajnika[1], packet_adres_nadajnika[2], packet_adres_nadajnika[3], packet_adres_nadajnika[4]);
+}
+}
+
 video_stop() {
 	packet_adres_nadajnika[0] = 26; /* przycisk 12 zwolniony */
 
@@ -678,7 +693,19 @@ void klawisz(GtkWidget *widget, GdkEventKey *event, int stan) { /* parametr stan
 			wyslij_stick(1, stick_y);
 		}
 
-		/* FIXME: dodać obsługę klawiatury numerycznej  */
+		/* numpad */
+		if (klawisz == 0xff96 || klawisz == 0xffb4) /* numpad 4 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 4 pressed");
+		wyslij_stick(9, -32768);
+		}
+
+		if (klawisz == 0xff98 || klawisz == 0xffb6) /* numpad 6 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 6 pressed");
+		wyslij_stick(9, 32767);
+		}
+		/* end of numpad */
 
 		if (klawisz == 'f') /* klawisz f */
 		{
@@ -717,7 +744,20 @@ void klawisz(GtkWidget *widget, GdkEventKey *event, int stan) { /* parametr stan
 			gtk_label_set_text(label_y, wychylenie_y);
 			wyslij_stick(1, stick_y);
 		}
-		/* FIXME: dodać obsługę klawiatury numerycznej  */
+		
+		/* numpad */
+		if (klawisz == 0xff96 || klawisz == 0xffb4) /* numpad 4 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 4 released");
+		wyslij_stick(9, 0);
+		}
+
+		if (klawisz == 0xff98 || klawisz == 0xffb6) /* numpad 6 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 6 released");
+		wyslij_stick(9, 0);
+		}
+		/* end of numpad */
 	}
 }
 
