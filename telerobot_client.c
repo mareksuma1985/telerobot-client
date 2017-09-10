@@ -705,6 +705,18 @@ void klawisz(GtkWidget *widget, GdkEventKey *event, int stan) { /* parametr stan
 		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 6 pressed");
 		wyslij_stick(9, 32767);
 		}
+		
+		if (klawisz == 0xff97 || klawisz == 0xffb8) /* numpad 8 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 8 pressed");
+		wyslij_stick(10, -32768);
+		}
+
+		if (klawisz == 0xff99 || klawisz == 0xffb2) /* numpad 2 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 2 pressed");
+		wyslij_stick(10, 32767);
+		}
 		/* end of numpad */
 
 		if (klawisz == 'f') /* klawisz f */
@@ -756,6 +768,18 @@ void klawisz(GtkWidget *widget, GdkEventKey *event, int stan) { /* parametr stan
 		{
 		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 6 released");
 		wyslij_stick(9, 0);
+		}
+		
+		if (klawisz == 0xff97 || klawisz == 0xffb8) /* numpad 8 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 8 released");
+		wyslij_stick(10, 0);
+		}
+
+		if (klawisz == 0xff99 || klawisz == 0xffb2) /* numpad 2 */
+		{
+		push_item(statusbar, GINT_TO_POINTER(context_id), "numpad 2 released");
+		wyslij_stick(10, 0);
 		}
 		/* end of numpad */
 	}
