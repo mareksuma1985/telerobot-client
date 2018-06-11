@@ -847,27 +847,65 @@ void zczytuj_joystick() {
 				}
 				/* oś X drugiego drążka (3) */
 			}
-			/* FIXME: generuje dziwne wartości */
-			/*
-			else if (jse.number == 4) {
-				stick_4 = jse.value;
-				printf("oś: %d wychylenie %d\n", jse.number, stick_4);
+else if (jse.number == 4) {
+if (buttons_throttle && r2_pressed == TRUE) {
+	stick_4 = jse.value;
+	throttle = jse.value;
+	printf("oś: %d wychylenie %d\n", jse.number, throttle);
+	wyslij_stick(4, throttle);
+	gtk_progress_bar_set_fraction(progress2, jse.value * 0.000015259 + 0.5);
+}
+/* right analog trigger (throttle if buttons_throttle == true) */
+}
 
-				wyslij_stick(1, stick_4);
-				if (stick_4 != 0) {
-					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-				}
+else if (jse.number == axis[5]) {
+/* throttle or elevator*/
+stick_5 = jse.value;
+sprintf(wychylenie_y2, "Y: %+06d", stick_5);
+gtk_label_set_text(label_y2, wychylenie_y2);
+wyslij_stick(5, stick_5);
+}
 
-			} else if (jse.number != 4) {
-				stick_4 = jse.value;
-				printf("oś: %d wychylenie %d\n", jse.number, stick_4);
+else if (jse.number == axis[6]) {
+/* mapping depends on connection type (USB/Bluetooth) */
+stick_6 = jse.value;
+if(stick_6 == 0)
+{
+}
+else if(stick_6 > 0)
+{
+printf("rudder trim increased\n");
+wyslij_stick(6, stick_6);
+}
+else if(stick_6 < 0)
+{
+printf("rudder trim decreased\n");
+wyslij_stick(6, stick_6);
+}
+}
 
-				wyslij_stick(2, stick_4);
-				if (stick_4 != 0) {
-					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-				}
-			}
-			*/
+else if (jse.number == axis[7]) {
+/* mapping depends on connection type (USB/Bluetooth) */
+stick_7 = jse.value;
+if(stick_7 == 0)
+{
+}
+else if(stick_7 > 0)
+{
+printf("elevator trim increased\n");
+wyslij_stick(7, stick_7);
+}
+else if(stick_7 < 0)
+{
+printf("elevator trim decreased\n");
+wyslij_stick(7, stick_7);
+}
+}
+
+else if (jse.number == axis[8]) {
+printf("oś: %d wychylenie %d\n", jse.number, jse.value);
+gtk_progress_bar_set_fraction(progress5, jse.value * 0.000015259 + 0.5);
+}
 		}
 
 		if (jse.type == JS_EVENT_BUTTON) {
