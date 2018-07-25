@@ -5,7 +5,7 @@ LIBS=`pkg-config --libs gtk+-2.0 gdk-pixbuf-2.0 cairo gstreamer-0.10 gstreamer-i
 all: telerobot_client
 
 telerobot_client: telerobot_client.c
-	gcc $(CFLAGS) $< -o $@ $(LIBS)
+	gcc $(CFLAGS) $< -o $@ $(LIBS) -lm
 
 clean:
 	rm -f *.o telerobot_client
