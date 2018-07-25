@@ -30,6 +30,7 @@
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <math.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -829,6 +830,14 @@ int read_joystick_event(struct js_event *jse) {
 	printf("Unexpected bytes from joystick:%d\n", bytes);
 	return -1;
 }
+
+int expo(int input)
+{
+double output = 0;
+output = (pow(input, 3)/1073741824);
+return (int) output;
+}
+
 /* warning */
 void zczytuj_joystick() {
 	rc = read_joystick_event(&jse);
