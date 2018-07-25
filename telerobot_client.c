@@ -128,6 +128,7 @@ GtkWidget *check_button_video, *check_button_joystick,
 gint context_id;
 /* treść komunikatu wyświetlanego na pasku stanu */
 char* message;
+gboolean isExponential = FALSE;
 
 int zamknij() {
 
@@ -145,6 +146,21 @@ int zamknij() {
 
 	gtk_main_quit();
 	return 0;
+}
+
+/* włącza i wyłącza tryb exponential */
+void switch_Expo()
+{
+if (isExponential)
+{
+push_item(statusbar, GINT_TO_POINTER(context_id), "exponential mode disabled");
+isExponential = FALSE;
+}
+else
+{
+push_item(statusbar, GINT_TO_POINTER(context_id), "exponential mode enabled");
+isExponential = TRUE;
+}
 }
 
 /* włącza i wyłącza tryb pełnoekranowy */
@@ -718,8 +734,14 @@ void klawisz(GtkWidget *widget, GdkEventKey *event, int stan) { /* parametr stan
 		wyslij_stick(10, 32767);
 		}
 		/* end of numpad */
+		
+		if (klawisz == 'e')
+		{
+			printf("zmiana trybu exponetial\n");
+			switch_Expo();
+		}
 
-		if (klawisz == 'f') /* klawisz f */
+		if (klawisz == 'f')
 		{
 			printf("zmiana trybu fullscreen\n");
 			switch_Fullscreen();
@@ -837,16 +859,26 @@ void zczytuj_joystick() {
 					play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
 				}
 				/* oś Y (1), wychylenie joysticka, prędkość */
-			} else if (jse.number == 3) {
-				stick_3 = jse.value;
-				printf("oś: %d wychylenie %d\n", jse.number, stick_3);
-				/* drukowanie wychyleń jest tylko w konsoli, a nie w etykietach Labels */
-				wyslij_stick(3, stick_3);
-				if (stick_3 != 0) {
-					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-				}
-				/* oś X drugiego drążka (3) */
 			}
+			
+else if (jse.number == 2) {
+if (isExponential)
+{
+stick_2 = expo((double) jse.value);
+wyslij_stick(2, stick_2);
+sprintf(wychylenie_x2, "X: %+06d", stick_2);
+printf("oś: %d wychylenie %d (expo: %d)\n", jse.number, jse.value, stick_2);
+}
+else
+{
+stick_2 = jse.value;
+wyslij_stick(2, stick_2);
+sprintf(wychylenie_x2, "X: %+06d", stick_2);
+printf("oś: %d wychylenie %d\n", jse.number, jse.value);
+}
+gtk_label_set_text(label_x2, wychylenie_x2);
+}
+			
 else if (jse.number == 4) {
 if (buttons_throttle && r2_pressed == TRUE) {
 	stick_4 = jse.value;
@@ -858,12 +890,23 @@ if (buttons_throttle && r2_pressed == TRUE) {
 /* right analog trigger (throttle if buttons_throttle == true) */
 }
 
-else if (jse.number == axis[5]) {
+else if (jse.number == 5) {
 /* throttle or elevator*/
-stick_5 = jse.value;
-sprintf(wychylenie_y2, "Y: %+06d", stick_5);
-gtk_label_set_text(label_y2, wychylenie_y2);
+if (isExponential)
+{
+stick_5 = expo((double) jse.value);
 wyslij_stick(5, stick_5);
+sprintf(wychylenie_y2, "Y: %+06d", stick_5);
+printf("oś: %d wychylenie %d (expo: %d)\n", jse.number, jse.value, stick_5);
+}
+else
+{
+stick_5 = jse.value;
+wyslij_stick(5, stick_5);
+sprintf(wychylenie_y2, "Y: %+06d", stick_5);
+printf("oś: %d wychylenie %d\n", jse.number, jse.value);
+}
+gtk_label_set_text(label_y2, wychylenie_y2);
 }
 
 else if (jse.number == axis[6]) {
