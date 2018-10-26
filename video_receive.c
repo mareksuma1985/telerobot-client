@@ -43,11 +43,8 @@ gboolean handleBusMsg(GstMessage * message, GtkWidget *widget) {
 
 	/* FIXME: see https://bugzilla.gnome.org/show_bug.cgi?id=599885 */
 	g_print("Got prepare-xwindow-id msg\n");
-	gst_x_overlay_set_xwindow_id(GST_X_OVERLAY(GST_MESSAGE_SRC(message)),
-			GDK_WINDOW_XWINDOW(widget->window));
-	/* FIXME: działa poprawnie z GTK+ 2.0, przy GTK+ 3.0 są problemy z zagnieżdżeniem obrazu w oknie głównym, błąd:
-	 ‘GtkWidget’ has no member named ‘window’
-	 */
+	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), GDK_WINDOW_XID(gtk_widget_get_parent_window(widget)));
+	gst_video_overlay_set_render_rectangle(overlay, 346, 7, 320, 320);
 	return TRUE;
 }
 
