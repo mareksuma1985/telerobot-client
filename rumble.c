@@ -59,7 +59,7 @@ char* effect_names[] = { "Sine vibration", "Constant Force", "Spring Condition",
 #ifdef HAS_LINUX_JOYSTICK_INTERFACE
 
 static int event_fd;
-static char *default_event_file = "/dev/input/event11";
+static char *default_event_file = "/dev/input/by-id/usb-Sony_Computer_Entertainment_Wireless_Controller-event-joystick";
 static int n_effects; /* Number of effects the device can play at the same time */
 static unsigned long features[4];
 static struct ff_effect effects[N_EFFECTS];
