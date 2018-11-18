@@ -979,32 +979,35 @@ gtk_progress_bar_set_fraction(progress5, jse.value * 0.000015259 + 0.5);
 					break;
 				case 4:
 					wyslij_dwustan(4, 1);
-					//play_rumble_effect(RUMBLE_DAMPING_EFFECT);
+					play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
 					break;
 				case 5:
 					wyslij_dwustan(5, 1);
-					//play_rumble_effect(RUMBLE_SPRING__EFFECT);
+					play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
 					break;
 				case 6:
 					wyslij_dwustan(6, 1);
-					//play_rumble_effect(RUMBLE_SINE_VIBE_EFFECT);
+					play_rumble_effect(RUMBLE_SPRING__EFFECT);
 					break;
 				case 7:
 					wyslij_dwustan(7, 1);
-					//play_rumble_effect(RUMBLE_CONSTANT_FORCE_EFFECT);
+					play_rumble_effect(RUMBLE_DAMPING_EFFECT);
 					break;
 				case 8:
 					wyslij_dwustan(8, 1);
-					//stop_all_rumble_effects();
 					break;
 				case 9:
 					wyslij_dwustan(9, 1);
 					break;
 				case 10:
-					wyslij_dwustan(10, 1); /* wciśnięcie lewego joysticka */
+					wyslij_dwustan(10, 1);
+					play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
 					break;
 				case 11:
-					wyslij_dwustan(11, 1); /* wciśnięcie prawego joysticka */
+					wyslij_dwustan(11, 1);
+					break;
+				case 12:
+					wyslij_dwustan(12, 1);
 					break;
 				default:
 					printf("przycisk %u nacisniety\n", jse.number);
@@ -1050,10 +1053,14 @@ gtk_progress_bar_set_fraction(progress5, jse.value * 0.000015259 + 0.5);
 					wyslij_dwustan(9, 0);
 					break;
 				case 10:
-					wyslij_dwustan(10, 0); /* zwolnienie lewego joysticka */
+					wyslij_dwustan(10, 0);
+					stop_all_rumble_effects();
 					break;
 				case 11:
-					wyslij_dwustan(11, 0); /* zwolnienie prawego joysticka */
+					wyslij_dwustan(11, 0);
+					break;
+				case 12:
+					wyslij_dwustan(12, 0);
 					break;
 				default:
 					printf("przycisk %u zwolniony\n", jse.number);
