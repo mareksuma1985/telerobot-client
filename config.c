@@ -231,14 +231,19 @@ void podziel(char* wiersz) {
 }
 
 /* otwiera plik konfiguracyjny i przypisuje zmiennym pobrane z niego wartości */
-void wczytaj_config() {
-	FILE *filepointer;
-	/* względna ścieżka do pliku konfiguracyjnego */
-	filepointer = fopen("./config.cfg", "r");
+void open_config(char argument[]) {
+/* relative path to default configuration file */
+char filename[] = "./config.cfg";
+FILE *filepointer;
+if (argument != NULL)
+{
+strcpy(filename, argument);
+}
+
+filepointer = fopen(filename, "r");
 
 	if (filepointer == NULL) {
-		puts(
-				"Nie można otworzyć pliku konfiguracyjnego!\n  Przypisano wartości domyślne.");
+		printf("Nie można otworzyć pliku konfiguracyjnego %s!\n  Przypisano wartości domyślne.\n", filename);
 
 		/* tutaj przypisać wartości domyślne */
 		strcpy(joystick_descriptor, "/dev/input/js0");
