@@ -1421,7 +1421,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect_swapped(G_OBJECT(main_window), "destroy",
 			G_CALLBACK(zamknij), NULL);
 	/* wczytuje wartości zmiennych z pliku config.cfg */
-	wczytaj_config();
+	open_config(argv[1]);
 
 	/* wyświetla wszystkie elementy okna */
 	gtk_widget_show_all(main_window);
