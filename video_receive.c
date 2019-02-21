@@ -4,9 +4,9 @@
 
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include <gst/video/videooverlay.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
-#include <gst/interfaces/xoverlay.h>
 #include <glib.h>
 #include <stdlib.h>
 
@@ -15,14 +15,8 @@ GtkWidget *drawing_area;
 GtkWidget *drawing_area_frame;
 
 GstStateChangeReturn ret;
-GstElement *pipeline, *udp_src, *smokedec, *video_sink;
+GstElement *pipeline, *udp_src, *parser, *decoder, *video_sink;
 GstElement *pipeline_audio, *tcpclientsrc, *speexdec, *alsasink;
-
-/* tworzy ikonki przycisków nagrywania */
-/* GtkWidget *record_start_icon, *record_stop_icon; */
-
-/* tworzy przyciski nagrywania */
-/* GtkWidget *record_start_button, *record_stop_button; */
 
 static void on_pad_added(GstElement *element, GstPad *pad, gpointer data) {
 	GstPad *sinkpad;
@@ -37,14 +31,10 @@ gboolean handleBusMsg(GstMessage * message, GtkWidget *widget) {
 	/* ignore anything but 'prepare-xwindow-id' element messages */
 	if (GST_MESSAGE_TYPE(message) != GST_MESSAGE_ELEMENT)
 		return FALSE;
-
-	if (!gst_structure_has_name(message->structure, "prepare-xwindow-id"))
-		return FALSE;
-
-	/* FIXME: see https://bugzilla.gnome.org/show_bug.cgi?id=599885 */
-	g_print("Got prepare-xwindow-id msg\n");
-	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), GDK_WINDOW_XID(gtk_widget_get_parent_window(widget)));
-	gst_video_overlay_set_render_rectangle(overlay, 346, 7, 320, 320);
+	//g_print("Got prepare-xwindow-id msg\n");
+	//gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), GDK_WINDOW_XID(gtk_widget_get_parent_window(widget)));
+	//gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), 346, 7, 320, 320);
+	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(GST_MESSAGE_SRC(message)), GDK_WINDOW_XID(gtk_widget_get_window(widget)));
 	return TRUE;
 }
 
@@ -72,14 +62,18 @@ static void makeWindowBlack(GtkWidget * widget) {
 }
 
 /* 
-polecenie bash do odbierania obrazu i dźwięku:
-gst-launch-0.10 udpsrc port=5000 ! queue ! smokedec ! queue ! autovideosink tcpclientsrc host=127.0.0.1 port=5001 ! queue ! speexdec ! queue ! alsasink sync=false
+ stare polecenie bash do odbierania obrazu i dźwięku:
+ gst-launch-0.10 udpsrc port=5000 ! queue ! smokedec ! queue ! autovideosink tcpclientsrc host=127.0.0.1 port=5001 ! queue ! speexdec ! queue ! alsasink sync=false
 
-odbieranie samego obrazu:
-gst-launch-0.10 udpsrc port=5000 ! queue ! smokedec ! queue ! autovideosink
+ odbieranie samego obrazu:
+ gst-launch-0.10 udpsrc port=5000 ! queue ! smokedec ! queue ! autovideosink
 
-odbieranie samego dźwięku:
-gst-launch-0.10 tcpclientsrc host=127.0.0.1 port=5001 ! queue ! speexdec ! queue ! alsasink sync=false
+ odbieranie samego dźwięku:
+ gst-launch-0.10 tcpclientsrc host=127.0.0.1 port=5001 ! queue ! speexdec ! queue ! alsasink sync=false
+ */
+
+/* odbieranie samego obrazu:
+ gst-launch-1.0 udpsrc port=5000 ! h264parse ! avdec_h264 ! autovideosink
  */
 
 int video_receive() {
@@ -87,51 +81,70 @@ int video_receive() {
 	pipeline = gst_pipeline_new("pipeline");
 	udp_src = gst_element_factory_make("udpsrc", "udp-source");
 	g_object_set(G_OBJECT(udp_src), "port", 5000, NULL);
-	/* g_object_set(G_OBJECT(udp_src), "uri", "udp://127.0.0.1:5000", NULL); */
+
+	parser = gst_element_factory_make("h264parse", "parser");
+
+	//decoder = gst_element_factory_make("avdec_h264", "decoder");
+	decoder = gst_element_factory_make("vaapih264dec", "decoder");
+
 	video_sink = gst_element_factory_make("xvimagesink", "videosink");
 	g_object_set(G_OBJECT(video_sink), "sync", FALSE, NULL);
 	g_object_set(G_OBJECT(video_sink), "force-aspect-ratio", TRUE, NULL);
 	if (!video_sink) {
 		g_print("output could not be found - check your install\n");
 	}
-	smokedec = gst_element_factory_make("smokedec", "smoke-decoder");
 
 	/* assertions */
+
 	g_assert(pipeline != NULL);
 	g_assert(udp_src != NULL);
-	g_assert(smokedec != NULL);
+	g_assert(parser != NULL);
+	g_assert(decoder != NULL);
 	g_assert(video_sink != NULL);
 
-	gst_bus_add_watch(gst_pipeline_get_bus(GST_PIPELINE(pipeline)),	(GstBusFunc) bus_call, drawing_area);
+	gst_bus_add_watch(gst_pipeline_get_bus(GST_PIPELINE(pipeline)), (GstBusFunc) bus_call, drawing_area);
 	/* źródło obrazu, ustawienie numeru portu */
 
-	if (!g_signal_connect(udp_src, "pad-added", G_CALLBACK(on_pad_added), smokedec)) {
-		g_print("Failed to g_signal_connect udp_src with smokedec!\n");
+	if (!g_signal_connect(udp_src, "pad-added", G_CALLBACK(on_pad_added), parser)) {
+		g_print("Failed to g_signal_connect udp_src with parser!\n");
+		return -1;
+	}
+
+	if (!g_signal_connect(parser, "pad-added", G_CALLBACK(on_pad_added), decoder)) {
+		g_print("Failed to g_signal_connect parser with the decoder!\n");
 		return -1;
 	}
 
 	/*
 	 łączenie pad-ów
-	 gst_pad_connect (gst_element_get_pad (udp_src, "src"), gst_element_get_pad (smokedec, "sink"));
-	 gst_pad_connect (gst_element_get_pad (smokedec, "src"), gst_element_get_pad (video_sink, "sink"));
+	 gst_pad_connect (gst_element_get_pad (udp_src, "src"), gst_element_get_pad (decoder, "sink"));
+	 gst_pad_connect (gst_element_get_pad (decoder, "src"), gst_element_get_pad (video_sink, "sink"));
 	 */
 
 	gst_bin_add(GST_BIN(pipeline), udp_src);
-	gst_bin_add(GST_BIN(pipeline), smokedec);
+	gst_bin_add(GST_BIN(pipeline), parser);
+	gst_bin_add(GST_BIN(pipeline), decoder);
 	gst_bin_add(GST_BIN(pipeline), video_sink);
 
-	if (!gst_element_link(udp_src, smokedec)) {
-		g_print("Error: Failed to link udp_src with smokedec!\n");
+	if (!gst_element_link(udp_src, parser)) {
+		g_print("Error: Failed to link udp_src with the parser!\n");
 		return -1;
 	} else {
-		g_print("Linked udp_src with smokedec\n");
+		g_print("Linked udp_src with parser\n");
 	}
 
-	if (!gst_element_link(smokedec, video_sink)) {
-		g_print("Error: Failed to link smokedec with video_sink!\n");
+	if (!gst_element_link(parser, decoder)) {
+		g_print("Error: Failed to link parser with the decoder!\n");
 		return -1;
 	} else {
-		g_print("Linked smokedec with video_sink\n");
+		g_print("Linked parser with decoder\n");
+	}
+
+	if (!gst_element_link(decoder, video_sink)) {
+		g_print("Error: Failed to link the decoder with video_sink!\n");
+		return -1;
+	} else {
+		g_print("Linked decoder with video_sink\n");
 	}
 
 	if (gst_element_set_state(pipeline, GST_STATE_PAUSED)) {
@@ -178,7 +191,7 @@ int audio_receive() {
 	 */
 
 	pipeline_audio = gst_pipeline_new("pipeline-audio");
-    //g_object_set(G_OBJECT(pipeline_audio), "sync", TRUE, NULL);
+	//g_object_set(G_OBJECT(pipeline_audio), "sync", TRUE, NULL);
 	tcpclientsrc = gst_element_factory_make("tcpclientsrc", "udp-source");
 	g_object_set(G_OBJECT(tcpclientsrc), "host", "localhost", NULL);
 	g_object_set(G_OBJECT(tcpclientsrc), "port", 5001, NULL);
@@ -189,6 +202,7 @@ int audio_receive() {
 		g_print("output could not be found - check your install\n");
 	}
 
+	/* assertions */
 	/*
 	 g_assert (pipeline_audio != NULL);
 	 g_assert (tcpclientsrc != NULL);
@@ -200,8 +214,7 @@ int audio_receive() {
 	gst_bin_add(GST_BIN(pipeline_audio), speexdec);
 	gst_bin_add(GST_BIN(pipeline_audio), alsasink);
 
-	if (!g_signal_connect(tcpclientsrc, "pad-added", G_CALLBACK(on_pad_added),
-			speexdec)) {
+	if (!g_signal_connect(tcpclientsrc, "pad-added", G_CALLBACK(on_pad_added), speexdec)) {
 		g_print("Failed to g_signal_connect tcpclientsrc with speexdec!\n");
 		/* return -1; */}
 
