@@ -1,33 +1,40 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <gtk/gtk.h>
 #include <string.h>
 
-/* potrzebne do sprawdzania lokalnego adresu IP */
+/* for checking local IP address */
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 
-char joystick_descriptor[20];
+char joystick_descriptor[32];
 char interfejs_sieciowy[16];
 
 int tryb_wysylania;
 /*
- 1 UDP IP
- 2 (nie użyty)
- 3 (nie użyty)
+ 0 UDP IP
+ 1 TCP IP
+ 2 UDP old
  */
 
 /* adresy IP zapisane jako 32-bitowe liczby */
-int odbiornik_IP;
 int nadajnik_IP;
+int odbiornik_IP;
+int odbiornik_port;
 /* int	nadajnik_INET6; (nie użyty) */
 
 /* numer kamery */
 short int v4l_device_number;
 
-/* gboolean */
-short int isFullscreen;
+gboolean isFullscreen;
+gboolean r2_throttle;
+
+/* DualShock 4 has 12 (8 since Ubuntu 18.04) axes while connected by USB, 14 axes while connected by ds4drv Bluetooth driver */
+int axis[14] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+int deadzone_x1;
+int deadzone_y1;
 
 /*
  int print_interface_IP()
@@ -40,13 +47,13 @@ short int isFullscreen;
 
  for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next)
  {
- if (ifa ->ifa_addr->sa_family==AF_INET) 
+ if (ifa ->ifa_addr->sa_family==AF_INET)
  { // check it is IP4
  // is a valid IP4 Address
  tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
  char addressBuffer[INET_ADDRSTRLEN];
  inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
- printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); 
+ printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
  }
  else if (ifa->ifa_addr->sa_family==AF_INET6)
  { // check it is IP6
@@ -54,8 +61,8 @@ short int isFullscreen;
  tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
  char addressBuffer[INET6_ADDRSTRLEN];
  inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
- printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); 
- } 
+ printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+ }
  }
  if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
  return 0;
@@ -72,12 +79,11 @@ int check_interface_ip() {
 	for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 
-		{ // check it is IP4
-		  // is a valid IP4 Address
+		{
+			/* http://man7.org/linux/man-pages/man3/getifaddrs.3.html */
 			tmpAddrPtr = &((struct sockaddr_in *) ifa->ifa_addr)->sin_addr;
 			char addressBuffer[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-			/* printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); */
 			if (strcmp(ifa->ifa_name, interfejs_sieciowy) == 0) {
 				printf("znaleziono");
 				printf(" nadajnik_IP= 		%s", addressBuffer);
@@ -86,19 +92,19 @@ int check_interface_ip() {
 				nadajnik_IP = nadajnik_IP + atoi(strtok(NULL, ".:-")) * 256;
 				nadajnik_IP = nadajnik_IP + atoi(strtok(NULL, ".:-"));
 				/* nadajnik_IP to adres IP zapisany jako 32-bitowa liczba */
-				printf(" (%X hex)\n", nadajnik_IP);
+				printf(" (hex: %X)\n", nadajnik_IP);
 			}
 
 		}
 		/* for IPV6 */
-		/*        
+		/*
 		 else if (ifa->ifa_addr->sa_family==AF_INET6)
 		 {
 		 tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 		 char addressBuffer[INET6_ADDRSTRLEN];
 		 inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-		 printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer); 
-		 } 
+		 printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+		 }
 		 */
 	}
 	if (ifAddrStruct != NULL)
@@ -130,7 +136,7 @@ void przytnij(char* wartosc) {
 
 void przypisz(char* zmienna, char* wartosc) {
 	if (strcmp(zmienna, "joystick_descriptor") == 0)
-		/* szuka w pliku zmiennej o nazwie joystick_descriptor */
+	/* szuka w pliku zmiennej o nazwie joystick_descriptor */
 	{
 		printf("przypisano");
 		strcpy(joystick_descriptor, wartosc);
@@ -139,7 +145,7 @@ void przypisz(char* zmienna, char* wartosc) {
 	}
 
 	if (strcmp(zmienna, "interfejs_sieciowy") == 0)
-		/* szuka w pliku zmiennej o nazwie interfejs_sieciowy */
+	/* szuka w pliku zmiennej o nazwie interfejs_sieciowy */
 	{
 		printf("przypisano");
 		strcpy(interfejs_sieciowy, wartosc);
@@ -158,7 +164,13 @@ void przypisz(char* zmienna, char* wartosc) {
 		odbiornik_IP = odbiornik_IP + atoi(strtok(NULL, ".:-")) * 256;
 		odbiornik_IP = odbiornik_IP + atoi(strtok(NULL, ".:-"));
 		/* odbiornik_IP to adres IP zapisany jako 32-bitowa liczba */
-		printf(" (%X hex)\n", odbiornik_IP);
+		printf(" (hex: %X)\n", odbiornik_IP);
+	}
+
+	if (strcmp(zmienna, "odbiornik_port") == 0) {
+		printf("przypisano");
+		odbiornik_port = atoi(wartosc);
+		printf(" %s=		%hd\n", zmienna, odbiornik_port);
 	}
 
 	if (strcmp(zmienna, "kamera") == 0) {
@@ -181,7 +193,7 @@ void przypisz(char* zmienna, char* wartosc) {
 	 nadajnik_IP= nadajnik_IP + atoi(strtok (NULL,".:-")) *65536;
 	 nadajnik_IP= nadajnik_IP + atoi(strtok (NULL,".:-")) *256;
 	 nadajnik_IP= nadajnik_IP + atoi(strtok (NULL,".:-"));
-	 printf (" (%X hex)\n", nadajnik_IP); 
+	 printf (" (%X hex)\n", nadajnik_IP);
 	 }
 	 */
 
@@ -190,12 +202,65 @@ void przypisz(char* zmienna, char* wartosc) {
 		printf(" %s= 		%s", zmienna, wartosc);
 		/* zero lub jedynka wczytana z pliku tekstowego jest ciągiem znaków */
 		if (strcmp(wartosc, "1") == 0) {
-			isFullscreen = 1;
+			isFullscreen = TRUE;
 		}
 		if (strcmp(wartosc, "0") == 0) {
-			isFullscreen = 0;
+			isFullscreen = FALSE;
 		}
 		printf("\n");
+	}
+
+	if (strcmp(zmienna, "r2_throttle") == 0) {
+		printf("przypisano");
+		printf(" %s= 		%s", zmienna, wartosc);
+		if (strcmp(wartosc, "1") == 0) {
+			r2_throttle = TRUE;
+		}
+		if (strcmp(wartosc, "0") == 0) {
+			r2_throttle = FALSE;
+		}
+		printf("\n");
+	}
+
+	if (strcmp(zmienna, "deadzone_x1") == 0) {
+		printf("przypisano");
+		deadzone_x1 = atoi(wartosc);
+		printf(" %s=			%hd\n", zmienna, deadzone_x1);
+	}
+
+	if (strcmp(zmienna, "deadzone_y1") == 0) {
+		printf("przypisano");
+		deadzone_y1 = atoi(wartosc);
+		printf(" %s=			%hd\n", zmienna, deadzone_y1);
+	}
+
+	/* remapping gamepad axles */
+
+	if (strcmp(zmienna, "axis_yaw") == 0) {
+		printf("przypisano");
+		axis[0] = atoi(wartosc);
+		printf(" %s=			%hd\n", zmienna, axis[0]);
+	}
+
+	if (strcmp(zmienna, "axis_pitch") == 0) {
+		printf("przypisano");
+		axis[1] = atoi(wartosc);
+		printf(" %s=			%hd\n", zmienna, axis[1]);
+	}
+
+	if (strcmp(zmienna, "axis_roll") == 0) {
+		printf("przypisano");
+		axis[3] = atoi(wartosc);
+		printf(" %s=			%hd\n", zmienna, axis[3]);
+	}
+
+	/* 3 - L2, 4 - R2 */
+	/* 2 - L2, 5 - R2 since Ubuntu 18.04 */
+
+	if (strcmp(zmienna, "axis_throttle") == 0) {
+		printf("przypisano");
+		axis[4] = atoi(wartosc);
+		printf(" %s=		%hd\n", zmienna, axis[4]);
 	}
 	/* tutaj przypisywanie kolejnych wartośći zmiennym */
 }
@@ -232,15 +297,15 @@ void podziel(char* wiersz) {
 
 /* otwiera plik konfiguracyjny i przypisuje zmiennym pobrane z niego wartości */
 void open_config(char argument[]) {
-/* relative path to default configuration file */
-char filename[] = "./config.cfg";
-FILE *filepointer;
-if (argument != NULL)
-{
-strcpy(filename, argument);
-}
-
-filepointer = fopen(filename, "r");
+	/* relative path to default configuration file */
+	char filename[32];
+	FILE *filepointer;
+	if (argument == NULL) {
+		strcpy(filename, "./config.cfg");
+	} else {
+		strcpy(filename, argument);
+	}
+	filepointer = fopen(filename, "r");
 
 	if (filepointer == NULL) {
 		printf("Nie można otworzyć pliku konfiguracyjnego %s!\n  Przypisano wartości domyślne.\n", filename);
@@ -249,49 +314,31 @@ filepointer = fopen(filename, "r");
 		strcpy(joystick_descriptor, "/dev/input/js0");
 		strcpy(interfejs_sieciowy, "lo");
 		/* czyli domyślnie loopback */
-		nadajnik_IP = 0x7F000001; /* jeśli plik nie jest otwierany przypisuje wartość domyślną 127.0.0.1*/
+		nadajnik_IP = 0x7F000001; /* default value is 127.0.0.1*/
 		odbiornik_IP = 0x7F000001;
+		odbiornik_port = 7654;
 		v4l_device_number = 0;
-		tryb_wysylania = 1;
-		isFullscreen = 0;
+		tryb_wysylania = 0;
+		isFullscreen = FALSE;
+		r2_throttle = TRUE; /* right analog button works as throttle */
 	}
 
 	else {
-		printf("Otwarcie pliku konfiguracyjnego\n");
+		printf("Otwarcie pliku konfiguracyjnego %s\n", filename);
 
 		char * wiersz = NULL;
 		size_t rozmiar = 0;
-		ssize_t cos;
+		ssize_t line;
 
-		while ((cos = getline(&wiersz, &rozmiar, filepointer)) != -1) {
+		while ((line = getline(&wiersz, &rozmiar, filepointer)) != -1) {
 			podziel(wiersz);
 		}
 
 		/*
-		 Function: ssize_t getline (char **lineptr, size_t *n, FILE *stream)
-
-		 This function reads an entire line from stream, storing the text
-		 (including the newline and a terminating null character)
-		 in a buffer and storing the buffer address in *lineptr.
-		 Before calling getline, you should place in *lineptr the address
-		 of a buffer *n bytes long, allocated with malloc.
-		 If this buffer is long enough to hold the line, getline stores
-		 the line in this buffer. Otherwise, getline makes the buffer bigger
-		 using realloc, storing the new buffer address back in *lineptr
-		 and the increased size back in *n. See Unconstrained Allocation.
-		 If you set *lineptr to a null pointer, and *n to zero,
-		 before the call, then getline allocates the initial buffer for you
-		 by calling malloc. In either case, when getline returns,
-		 *lineptr is a char * which points to the text of the line.
-		 When getline is successful, it returns the number of
-		 characters read (including the newline, but not including
-		 the terminating null). This value enables you to distinguish null
-		 characters that are part of the line from the null character
-		 inserted as a terminator. This function is a GNU extension, but
-		 it is the recommended way to read lines from a stream.
-		 The alternative standard functions are unreliable. If an error
-		 occurs or end of file is reached without any bytes read,
-		 getline returns -1.
+		 for (int i = 0; i < 12; i++)
+		 {
+		 printf("oś %hd=					%hd\n", i, axis[i]);
+		 }
 		 */
 		fclose(filepointer);
 		printf("Zamknięcie pliku konfiguracyjnego\n");
