@@ -9,6 +9,15 @@ float sensor_z = 10;
 double roll_rads;
 double pitch_rads;
 
+static void draw_mask(cairo_t *cr, int width, int height)
+{
+GdkPixbuf *mask = gdk_pixbuf_new_from_file ("mask.svg", NULL);
+GdkPixbuf *mask_scaled = gdk_pixbuf_scale_simple(mask, width, height, GDK_INTERP_BILINEAR);
+gdk_cairo_set_source_pixbuf(cr, mask_scaled, 0, 0);
+cairo_rectangle(cr, 0, 0, width, height);
+cairo_fill(cr);
+}
+
 static void draw_ground(cairo_t *cr, GtkWidget *widget) {
 	int width = gtk_widget_get_allocated_width(widget);
 	int height = gtk_widget_get_allocated_height(widget);
@@ -28,6 +37,8 @@ static void draw_ground(cairo_t *cr, GtkWidget *widget) {
 	cairo_close_path(cr);
 	cairo_stroke_preserve(cr);
 	cairo_fill(cr);
+
+	draw_mask(cr, width, height);
 }
 
 static void draw_nivel(cairo_t *cr, GtkWidget *widget) {
