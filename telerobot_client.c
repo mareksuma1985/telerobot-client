@@ -1106,71 +1106,61 @@ wyslij_stick(7, stick_7);
 }
 
 if (jse.type == JS_EVENT_BUTTON) {
-/* naciskanie przycisków */
-/* TODO: dodać możliwość przypisywanie klawiszom/ przyciskom działania za pomocą pliku config.cfg */
+/* button pressed */
 if (jse.value == 1)
-
 {
-switch (jse.number) {
-case 0:
+if (jse.number == button[0])
 {/* DS4 "X" */
 /* pitch stabilization disabled */
 wyslij_dwustan(0, 1);
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 1:
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
+}
+else if (jse.number == button[1])
 {/* DS4 "circle" */
 /* roll stabilization disabled */
 wyslij_dwustan(1, 1);
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 2:
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
+}
+else if (jse.number == button[2])
 {/* DS4 "triangle" */
 /* roll stabilization enabled */
 wyslij_dwustan(2, 1);
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 3:
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);	
+}
+else if (jse.number == button[3])
 {/* DS4 "square" */
 /* pitch stabilization enabled */
 wyslij_dwustan(3, 1);
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 4:
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
+}
+else if (jse.number == button[4])
 {/* DS4 L1 */
 switch_Recording();
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 5:
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
+}
+else if (jse.number == button[5])
 {/* DS4 R1 */
 wyslij_dwustan(5, 1);
-play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);}
-break;
-case 6:
-/* DS4 L2 "button" */
-break;
-case 7:
-/* DS4 R2 "button" */
-r2_pressed = TRUE;
-/* check_ESC(TRUE); */
-break;
-case 8:
-// DualShock 3: Select button, DualShock 4: Share button
-//wyslij_dwustan(8, 1);
+//play_rumble_effect(RUMBLE_STRONG_RUMBLE_EFFECT);
+}
+else if (jse.number == button[6])
+{/* DS4 L2 "button" */}
+else if (jse.number == button[7])
+{/* DS4 R2 "button" */}
+else if (jse.number == button[8])
+{/* DualShock 3: Select button, DualShock 4: Share button */
 switch_Shining();
-break;
-case 9:
-// DualShock 3: Start button, DualShock 4: Options button
+//wyslij_dwustan(8, 1);
+}
+else if (jse.number == button[9])
+{/* DualShock 3: Start button, DualShock 4: Options button */
 wyslij_dwustan(9, 1);
-//
-break;
-case 10:
-// PlayStation button press
-printf("przycisk %u nacisniety\n", jse.number);
-play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-break;
-case 11:
-/* left knob press */
+}
+else if (jse.number == button[10])
+{printf("PlayStation button pressed\n");}
+else if (jse.number == button[11])
+{/* left knob press */
+printf("left knob pressed\n");
 /*
 if (r2_throttle == TRUE)
 {
@@ -1178,11 +1168,10 @@ if (r2_throttle == TRUE)
 	gtk_statusbar_push(statusbar, GINT_TO_POINTER(context_id), "throttle controlled by stick's vertical axis");
 }
 */
-
-play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-break;
-case 12:
-/* right knob press */
+}
+else if (jse.number == button[12])
+{/* right knob press */
+printf("right knob pressed\n");
 /*
 if (r2_throttle == FALSE)
 {
@@ -1190,83 +1179,68 @@ if (r2_throttle == FALSE)
 	gtk_statusbar_push(statusbar, GINT_TO_POINTER(context_id), "throttle controlled by R2 analog trigger");
 }
 */
-play_rumble_effect(RUMBLE_WEAK_RUMBLE_EFFECT);
-break;
-default:
-printf("przycisk %u nacisniety\n", jse.number);
-break;
 }
+else
+{printf("button %u pressed\n", jse.number);}
 
-/*
-if (test_effect < 15)
-{test_effect++;}
-printf("effect: %d\n", test_effect);
-*/
-
-/* rozplombowuje przyciski */
 if (buttons_ever_pressed == FALSE)
 {buttons_ever_pressed = TRUE;}
 }
 
-/* zwalnianie przyciskow */
+/* button released */
 if (jse.value == 0 && buttons_ever_pressed) {
-switch (jse.number) {
-case 0:
+if (jse.number == button[0])
+{
 wyslij_dwustan(0, 0);
-stop_all_rumble_effects();
-break;
-case 1:
-wyslij_dwustan(1, 0);
-stop_all_rumble_effects();
-break;
-case 2:
-wyslij_dwustan(2, 0);
-stop_all_rumble_effects();
-break;
-case 3:
-wyslij_dwustan(3, 0);
-stop_all_rumble_effects();
-break;
-case 4:
-//wyslij_dwustan(4, 0);
-stop_all_rumble_effects();
-break;
-case 5:
-wyslij_dwustan(5, 0);
-stop_all_rumble_effects();
-break;
-case 6:
-break;
-case 7:
-r2_pressed = FALSE;
-stop_all_rumble_effects();
-/* check_ESC(FALSE); */
-break;
-case 8:
-// DualShock 3: Select button, DualShock 4: Share button
-//wyslij_dwustan(8, 0);
-break;
-case 9:
-// DualShock 3: Start button, DualShock 4: Options button
-wyslij_dwustan(9, 0);
-break;
-case 10:
-printf("przycisk %u zwolniony\n", jse.number);
-stop_all_rumble_effects();
-break;
-case 11:
-printf("przycisk %u zwolniony\n", jse.number);
-stop_all_rumble_effects();
-break;
-case 12:
-printf("przycisk %u zwolniony\n", jse.number);
-stop_all_rumble_effects();
-break;
-default:
-printf("przycisk %u zwolniony\n", jse.number);
-break;
+//stop_all_rumble_effects();
 }
-/* przycisk ma zazwyczaj tylko dwie wartości */
+else if (jse.number == button[1])
+{
+wyslij_dwustan(1, 0);
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[2])
+{
+wyslij_dwustan(2, 0);
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[3])
+{
+wyslij_dwustan(3, 0);
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[4])
+{
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[5])
+{
+wyslij_dwustan(5, 0);
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[6])
+{}
+else if (jse.number == button[7])
+{
+//stop_all_rumble_effects();
+}
+else if (jse.number == button[8])
+{
+/* DualShock 3: Select button, DualShock 4: Share button */
+//wyslij_dwustan(8, 0);
+}
+else if (jse.number == button[9])
+{/* DualShock 3: Start button, DualShock 4: Options button */
+wyslij_dwustan(9, 0);
+}
+else if (jse.number == button[10])
+{printf("PlayStation button released\n");}
+else if (jse.number == button[11])
+{printf("left knob released\n");}
+else if (jse.number == button[12])
+{printf("right knob released\n");}
+else
+{printf("button %u released\n", jse.number);}
 }
 }
 
@@ -1348,7 +1322,18 @@ g_print("Joystick file exists - USB mapping\n");
 gtk_progress_bar_set_text(progress3, "touchpad X:");
 gtk_progress_bar_set_text(progress4, "touchpad Y:");
 gtk_progress_bar_set_text(progress5, "axis 8:");
-} 
+}
+else if (access("/dev/input/by-id/usb-Microsoft_Controller_0000000000000000000000000000-joystick", 0) == 0) {
+g_print("Xbox One controller - USB mapping\n");
+
+button[2] = 3; // "triangle" - "Y"
+button[3] = 2; // "square" - "X"
+button[8] = 6; // share - view
+button[9] = 7; // options - menu
+button[10] = 8; // PlayStation - Xbox
+button[11] = 9; // left stick press
+button[12] = 10; // right stick press
+}
 else {
 g_print("Joystick file doesn't exist - Bluetooth mapping\n");
 
