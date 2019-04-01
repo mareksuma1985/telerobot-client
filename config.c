@@ -33,6 +33,7 @@ gboolean r2_throttle;
 
 /* DualShock 4 has 12 (8 since Ubuntu 18.04) axes while connected by USB, 14 axes while connected by ds4drv Bluetooth driver */
 int axis[14] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+int button[13] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 int deadzone_x1;
 int deadzone_y1;
 
